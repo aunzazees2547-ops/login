@@ -18,43 +18,6 @@ const SECRET = process.env.JWT_SECRET || 'your_secret_key';
 // ถ้าไม่มีใน .env ใช้ 'your_secret_key' แทน (⚠️ ไม่ควรใช้ใน production)
 
 
-// ─────────────────────────────────────────
-// ✅ REGISTER — สมัครสมาชิก
-// ─────────────────────────────────────────
-router.post('/register', async (req, res) => {
-// รับ HTTP POST ที่ path /register
-
-  const { name, email, password } = req.body;
-  // ดึงข้อมูลที่ส่งมาจาก body ของ request
-
-  if (!name || !email || !password)
-    return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบ' });
-  // ถ้าขาดอะไรสักอย่าง → หยุดทันที ส่ง error 400 กลับ
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // เข้ารหัสรหัสผ่าน เช่น "1234" → "$2b$10$xK9..."
-    // เลข 10 = ความซับซ้อน (saltRounds) — ยิ่งสูงยิ่งปลอดภัย แต่ช้ากว่า
-
-    const [result] = await db.query(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [name, email, hashedPassword]
-      // ? = placeholder ป้องกัน SQL Injection
-    );
-
-    res.status(201).json({ message: 'สมัครสมาชิกสำเร็จ', userId: result.insertId });
-    // 201 = Created สำเร็จ
-    // insertId = id ของ row ที่เพิ่งสร้างใน DB
-
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY')
-      return res.status(400).json({ message: 'อีเมลนี้ถูกใช้แล้ว' });
-    // ER_DUP_ENTRY = MySQL แจ้งว่า email ซ้ำ (เพราะ email เป็น UNIQUE ใน DB)
-
-    res.status(500).json({ message: 'server error' });
-    // error อื่นๆ ที่ไม่คาดคิด → ส่ง 500 กลับ
-  }
-});
 
 
 // ─────────────────────────────────────────
